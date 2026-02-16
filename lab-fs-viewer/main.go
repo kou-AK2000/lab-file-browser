@@ -29,9 +29,10 @@ type FileInfo struct {
 }
 
 type SystemInfo struct {
-	Hostname string `json:"hostname"`
-	Kernel   string `json:"kernel"`
-	Arch     string `json:"arch"`
+	Hostname     string `json:"hostname"`
+	Distribution string `json:"distribution"`
+	Kernel       string `json:"kernel"`
+	Arch         string `json:"arch"`
 }
 
 type ProcessInfo struct {
@@ -162,10 +163,24 @@ func systemHandler(w http.ResponseWriter, r *http.Request) {
 		kernel += string(byte(c))
 	}
 
+	// Distribution取得
+	dist := "Unknown"
+	data, err := os.ReadFile("/etc/os-release")
+	if err == nil {
+		lines := strings.Split(string(data), "\n")
+		for _, l := range lines {
+			if strings.HasPrefix(l, "PRETTY_NAME=") {
+				dist = strings.Trim(l[13:], `"`)
+				break
+			}
+		}
+	}
+
 	json.NewEncoder(w).Encode(SystemInfo{
-		Hostname: host,
-		Kernel:   kernel,
-		Arch:     runtime.GOARCH,
+		Hostname:     host,
+		Distribution: dist,
+		Kernel:       kernel,
+		Arch:         runtime.GOARCH,
 	})
 }
 
