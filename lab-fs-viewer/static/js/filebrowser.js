@@ -53,6 +53,34 @@ function getPermColor(item) {
 }
 
 /* ==============================
+   パーミッション分解
+============================== */
+function explainPerm(perm) {
+  if (!perm) return "Invalid permission";
+
+  perm = perm.toString().slice(-3); // ← 後ろ3桁だけ取る
+
+  const map = {
+    0: "---",
+    1: "--x",
+    2: "-w-",
+    3: "-wx",
+    4: "r--",
+    5: "r-x",
+    6: "rw-",
+    7: "rwx",
+  };
+
+  const u = perm[0];
+  const g = perm[1];
+  const o = perm[2];
+
+  return `Owner : ${u} → ${map[u]}
+Group : ${g} → ${map[g]}
+Other : ${o} → ${map[o]}`;
+}
+
+/* ==============================
    ファイルを開く
 ============================== */
 function openFile(path) {
@@ -114,34 +142,65 @@ function render(data, path) {
   filtered.forEach((item) => {
     const row = document.createElement("tr");
 
-    row.innerHTML = `
-            <td>${item.mode}</td>
-            <td><span style="color:${getPermColor(item)};font-weight:bold">
-                ${item.perm}
-            </span></td>
-            <td>${item.nlink}</td>
-            <td>${item.owner}</td>
-            <td>${item.group}</td>
-            <td>${convertSize(item.size)}</td>
-            <td>${item.mod_time}</td>
-        `;
+    // Mode
+    const modeCell = document.createElement("td");
+    modeCell.textContent = item.mode;
+    row.appendChild(modeCell);
 
+    // Perm
+    const permCell = document.createElement("td");
+    const permSpan = document.createElement("span");
+    permSpan.textContent = item.perm;
+    permSpan.style.color = getPermColor(item);
+    permSpan.style.fontWeight = "bold";
+    permSpan.style.cursor = "pointer";
+
+    permSpan.onclick = () => {
+      alert(explainPerm(item.perm));
+    };
+
+    permCell.appendChild(permSpan);
+    row.appendChild(permCell);
+
+    // Links
+    const linkCell = document.createElement("td");
+    linkCell.textContent = item.nlink;
+    row.appendChild(linkCell);
+
+    // Owner
+    const ownerCell = document.createElement("td");
+    ownerCell.textContent = item.owner;
+    row.appendChild(ownerCell);
+
+    // Group
+    const groupCell = document.createElement("td");
+    groupCell.textContent = item.group;
+    row.appendChild(groupCell);
+
+    // Size
+    const sizeCell = document.createElement("td");
+    sizeCell.textContent = convertSize(item.size);
+    row.appendChild(sizeCell);
+
+    // Modified
+    const modCell = document.createElement("td");
+    modCell.textContent = item.mod_time;
+    row.appendChild(modCell);
+
+    // Name
     const nameCell = document.createElement("td");
     const span = document.createElement("span");
-
     span.classList.add("name-cell");
     span.style.cursor = "pointer";
 
     if (item.is_dir) {
       span.classList.add("dir-icon");
-
       span.onclick = () => {
         const newPath = path === "/" ? "/" + item.name : path + "/" + item.name;
         load(newPath);
       };
     } else {
       span.classList.add("file-icon");
-
       span.onclick = () => {
         const filePath =
           path === "/" ? "/" + item.name : path + "/" + item.name;
@@ -150,25 +209,9 @@ function render(data, path) {
     }
 
     span.textContent = item.name;
-
     nameCell.appendChild(span);
     row.appendChild(nameCell);
 
-    if (item.is_dir) {
-      span.onclick = () => {
-        const newPath = path === "/" ? "/" + item.name : path + "/" + item.name;
-        load(newPath);
-      };
-    } else {
-      span.onclick = () => {
-        const filePath =
-          path === "/" ? "/" + item.name : path + "/" + item.name;
-        openFile(filePath);
-      };
-    }
-
-    nameCell.appendChild(span);
-    row.appendChild(nameCell);
     tbody.appendChild(row);
   });
 }
