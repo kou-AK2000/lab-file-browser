@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Monitor</title>
+    </head>
+    <body>
+        <h2>System Monitor</h2>
+        <button onclick="location.href = 'index.html'">Back</button>
+
+        <div id="sys"></div>
+        <div>CPU: <span id="cpu"></span>%</div>
+        <div>Memory: <span id="mem"></span>%</div>
+
+        <h3>Processes</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>User</th>
+                    <th>RSS</th>
+                    <th>VSZ</th>
+                    <th>State</th>
+                    <th>Command</th>
+                </tr>
+            </thead>
+            <tbody id="proc"></tbody>
+        </table>
+
+        <script>
+            function update() {
+                fetch("/api/system")
+                    .then((r) => r.json())
+                    .then(
+                        (d) =>
+                            (document.getElementById("sys").innerText =
+                                d.hostname + " | " + d.kernel + " | " + d.arch),
+                    );
+
+                fetch("/api/cpu")
+                    .then((r) => r.json())
+                    .then(
+                        (d) =>
+                            (document.getElementById("cpu").innerText =
+                                d.cpu.toFixed(2)),
+                    );
+
+                fetch("/api/memory")
+                    .then((r) => r.json())
+                    .then(
+                        (d) =>
+                            (document.getElementById("mem").innerText =
+                                d.memory.toFixed(2)),
+                    );
+
+                fetch("/api/process")
+                    .then((r) => r.json())
+                    .then((data) => {
+                        let html = "";
+                        data.slice(0, 30).forEach((p) => {
+                            html += `<tr>
+      <td>${p.pid}</td>
+      <td>${p.user}</td>
+      <td>${p.rss}</td>
+      <td>${p.vsz}</td>
+      <td>${p.state}</td>
+      <td>${p.command}</td>
+    </tr>`;
+                        });
+                        document.getElementById("proc").innerHTML = html;
+                    });
+            }
+
+            setInterval(update, 2000);
+            update();
+        </script>
+    </body>
+</html>
