@@ -1,3 +1,4 @@
+let showHidden = false;
 let currentPath = "/";
 let currentData = [];
 
@@ -244,7 +245,9 @@ function render(data, path) {
    APIロード
 ============================== */
 function load(path) {
-  fetch("/api/list?path=" + encodeURIComponent(path))
+  fetch(
+    "/api/list?path=" + encodeURIComponent(path) + "&show_hidden=" + showHidden,
+  )
     .then((res) => {
       if (!res.ok) throw new Error("API Error: " + res.status);
       return res.json();
@@ -307,6 +310,11 @@ window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("goPathBtn").click();
     }
   });
+
+  document.getElementById("showHiddenToggle").onchange = (e) => {
+    showHidden = e.target.checked;
+    load(currentPath);
+  };
 
   loadSystemInfo();
   load("/");

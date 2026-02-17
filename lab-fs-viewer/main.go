@@ -56,6 +56,9 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		path = "/"
 	}
 
+	// 🔹 追加：隠しファイル表示フラグ取得
+	showHidden := r.URL.Query().Get("show_hidden") == "true"
+
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -65,6 +68,11 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	var result []FileInfo
 
 	for _, e := range entries {
+
+		// 🔹 追加：隠しファイルフィルタ
+		if !showHidden && strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
 
 		fullPath := path + "/" + e.Name()
 		info, err := e.Info()
@@ -125,6 +133,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
 
