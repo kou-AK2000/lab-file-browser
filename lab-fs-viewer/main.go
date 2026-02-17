@@ -17,15 +17,16 @@ import (
 ============================= */
 
 type FileInfo struct {
-	Name    string `json:"name"`
-	IsDir   bool   `json:"is_dir"`
-	Size    int64  `json:"size"`
-	Perm    string `json:"perm"`
-	Mode    string `json:"mode"`
-	Nlink   uint32 `json:"nlink"` // ← これを uint32 にする
-	Owner   string `json:"owner"`
-	Group   string `json:"group"`
-	ModTime string `json:"mod_time"`
+	Name     string `json:"name"`
+	IsDir    bool   `json:"is_dir"`
+	Size     int64  `json:"size"`
+	Perm     string `json:"perm"`
+	Mode     string `json:"mode"`
+	Nlink    uint32 `json:"nlink"` // ← これを uint32 にする
+	Owner    string `json:"owner"`
+	Group    string `json:"group"`
+	ModTime  string `json:"mod_time"`
+	Readable bool   `json:"readable"`
 }
 
 type SystemInfo struct {
@@ -64,12 +65,34 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	var result []FileInfo
 
 	for _, e := range entries {
-		info, _ := e.Info()
+
+		fullPath := path + "/" + e.Name()
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
 
 		var modeStr string
 		var nlink uint32
 		var ownerName string = "-"
 		var groupName string = "-"
+		readable := true
+
+		// 特殊ファイル判定
+		mode := info.Mode()
+		if mode&os.ModeDevice != 0 ||
+			mode&os.ModeSocket != 0 ||
+			mode&os.ModeNamedPipe != 0 ||
+			mode&os.ModeSymlink != 0 {
+			readable = false
+		}
+
+		// 仮想FS拒否
+		if strings.HasPrefix(fullPath, "/proc") ||
+			strings.HasPrefix(fullPath, "/sys") ||
+			strings.HasPrefix(fullPath, "/dev") {
+			readable = false
+		}
 
 		if stat, ok := info.Sys().(*syscall.Stat_t); ok {
 
@@ -89,15 +112,16 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		result = append(result, FileInfo{
-			Name:    e.Name(),
-			IsDir:   e.IsDir(),
-			Size:    info.Size(),
-			Perm:    fmt.Sprintf("%o", info.Mode().Perm()),
-			Mode:    modeStr,
-			Nlink:   nlink,
-			Owner:   ownerName,
-			Group:   groupName,
-			ModTime: info.ModTime().Format("2006-01-02 15:04:05"),
+			Name:     e.Name(),
+			IsDir:    e.IsDir(),
+			Size:     info.Size(),
+			Perm:     fmt.Sprintf("%o", info.Mode().Perm()),
+			Mode:     modeStr,
+			Nlink:    nlink,
+			Owner:    ownerName,
+			Group:    groupName,
+			ModTime:  info.ModTime().Format("2006-01-02 15:04:05"),
+			Readable: readable,
 		})
 	}
 

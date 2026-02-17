@@ -93,7 +93,9 @@ function openFile(path) {
       document.getElementById("fileContent").textContent = text;
       document.getElementById("fileModal").style.display = "block";
     })
-    .catch((err) => alert(err.message));
+    .catch(() => {
+      // 何も出さない（無反応設計）
+    });
 }
 
 function closeModal() {
@@ -139,6 +141,19 @@ function render(data, path) {
     return 0;
   });
 
+  // 🔹 空ディレクトリ処理（ここに置く）
+  if (filtered.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 8;
+    cell.style.textAlign = "center";
+    cell.style.opacity = "0.6";
+    cell.textContent = "This directory is empty";
+    row.appendChild(cell);
+    tbody.appendChild(row);
+    return; // ← 重要
+  }
+
   filtered.forEach((item) => {
     const row = document.createElement("tr");
 
@@ -156,7 +171,10 @@ function render(data, path) {
     permSpan.style.cursor = "pointer";
 
     permSpan.onclick = () => {
-      alert(explainPerm(item.perm));
+      document.getElementById("fileContent").textContent = explainPerm(
+        item.perm,
+      );
+      document.getElementById("fileModal").style.display = "block";
     };
 
     permCell.appendChild(permSpan);
@@ -191,27 +209,33 @@ function render(data, path) {
     const nameCell = document.createElement("td");
     const span = document.createElement("span");
     span.classList.add("name-cell");
-    span.style.cursor = "pointer";
+    span.textContent = item.name;
 
-    if (item.is_dir) {
-      span.classList.add("dir-icon");
-      span.onclick = () => {
-        const newPath = path === "/" ? "/" + item.name : path + "/" + item.name;
-        load(newPath);
-      };
+    if (!item.readable) {
+      span.style.opacity = "0.4";
+      span.style.cursor = "default";
     } else {
-      span.classList.add("file-icon");
-      span.onclick = () => {
-        const filePath =
-          path === "/" ? "/" + item.name : path + "/" + item.name;
-        openFile(filePath);
-      };
+      span.style.cursor = "pointer";
+
+      if (item.is_dir) {
+        span.classList.add("dir-icon");
+        span.onclick = () => {
+          const newPath =
+            path === "/" ? "/" + item.name : path + "/" + item.name;
+          load(newPath);
+        };
+      } else {
+        span.classList.add("file-icon");
+        span.onclick = () => {
+          const filePath =
+            path === "/" ? "/" + item.name : path + "/" + item.name;
+          openFile(filePath);
+        };
+      }
     }
 
-    span.textContent = item.name;
     nameCell.appendChild(span);
     row.appendChild(nameCell);
-
     tbody.appendChild(row);
   });
 }
@@ -229,9 +253,12 @@ function load(path) {
       currentPath = path;
       currentData = data;
       document.getElementById("path").innerText = "Current: " + path;
+      document.getElementById("pathInput").value = path; // ← 追加
       render(data, path);
     })
-    .catch((err) => alert(err.message));
+    .catch(() => {
+      document.getElementById("path").innerText = "Failed to load directory";
+    });
 }
 
 function reload() {
@@ -266,6 +293,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
+  });
+
+  document.getElementById("goPathBtn").onclick = () => {
+    const inputPath = document.getElementById("pathInput").value.trim();
+    if (!inputPath) return;
+
+    load(inputPath);
+  };
+
+  document.getElementById("pathInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      document.getElementById("goPathBtn").click();
+    }
   });
 
   loadSystemInfo();
