@@ -8,19 +8,20 @@
 
     <body>
         <h2>Lab File Browser</h2>
+        <body>
+            <div id="header"></div>
 
-        <!-- ===== システム情報バー ===== -->
-        <div id="systemInfo">Loading system info...</div>
+            <!-- 既存のコンテンツ -->
 
-        <!-- ===== メニューバー ===== -->
-        <div class="menu-bar">
-            <button onclick="location.href = '/'">📁 File Browser</button>
-            <button onclick="location.href = '/monitor.html'">
-                📊 Monitor
-            </button>
-        </div>
+            <script type="module">
+                import { loadHeader } from "/js/header.js";
+                loadHeader();
+            </script>
 
-        <hr />
+            <script src="/js/filebrowser.js"></script>
+
+
+
 
         <div id="path"></div>
         <div id="pathNavigator" style="margin: 10px 0">

@@ -3,12 +3,23 @@
     <head>
         <meta charset="UTF-8" />
         <title>Monitor</title>
+        <link rel="stylesheet" href="/css/style.css" />
     </head>
     <body>
         <h2>System Monitor</h2>
-        <button onclick="location.href = 'index.html'">Back</button>
+        <body>
+          <div id="header"></div>
 
-        <div id="sys"></div>
+          <!-- Monitor UI -->
+
+          <script type="module">
+            import { loadHeader } from "/js/header.js";
+            loadHeader();
+          </script>
+
+          <script src="/js/monitor.js"></script>
+
+
         <div>CPU: <span id="cpu"></span>%</div>
         <div>Memory: <span id="mem"></span>%</div>
 
