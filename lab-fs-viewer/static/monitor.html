@@ -2,88 +2,47 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Monitor</title>
-        <link rel="stylesheet" href="/css/style.css" />
+        <title>Simple Monitor</title>
     </head>
     <body>
-        <h2>System Monitor</h2>
-        <body>
-          <div id="header"></div>
+        <h1>System Monitor</h1>
 
-          <!-- Monitor UI -->
+        <div id="header"></div>
 
-          <script type="module">
-            import { loadHeader } from "/js/header.js";
-            loadHeader();
-          </script>
+        <p>CPU: <span id="cpu">--</span>%</p>
+        <p>Memory: <span id="memory">--</span>%</p>
+        <p>Disk: <span id="disk">--</span>%</p>
+        <p>Uptime: <span id="uptime">--</span></p>
 
-          <script src="/js/monitor.js"></script>
-
-
-        <div>CPU: <span id="cpu"></span>%</div>
-        <div>Memory: <span id="mem"></span>%</div>
-
-        <h3>Processes</h3>
+        <h2>Disk Usage</h2>
         <table border="1">
             <thead>
                 <tr>
-                    <th>PID</th>
-                    <th>User</th>
-                    <th>RSS</th>
-                    <th>VSZ</th>
-                    <th>State</th>
-                    <th>Command</th>
+                    <th>Filesystem</th>
+                    <th>Size</th>
+                    <th>Used</th>
+                    <th>Avail</th>
+                    <th>Use%</th>
+                    <th>Mounted on</th>
                 </tr>
             </thead>
-            <tbody id="proc"></tbody>
+            <tbody id="dfTable"></tbody>
         </table>
 
-        <script>
-            function update() {
-                fetch("/api/system")
-                    .then((r) => r.json())
-                    .then(
-                        (d) =>
-                            (document.getElementById("sys").innerText =
-                                d.hostname + " | " + d.kernel + " | " + d.arch),
-                    );
+        <!-- JS分離 -->
+        <script type="module">
+            import { loadHeader } from "/js/header.js";
+            import { updateSystem, loadDF } from "/js/monitor.js";
 
-                fetch("/api/cpu")
-                    .then((r) => r.json())
-                    .then(
-                        (d) =>
-                            (document.getElementById("cpu").innerText =
-                                d.cpu.toFixed(2)),
-                    );
+            loadHeader();
 
-                fetch("/api/memory")
-                    .then((r) => r.json())
-                    .then(
-                        (d) =>
-                            (document.getElementById("mem").innerText =
-                                d.memory.toFixed(2)),
-                    );
+            // 初回実行
+            updateSystem();
+            loadDF();
 
-                fetch("/api/process")
-                    .then((r) => r.json())
-                    .then((data) => {
-                        let html = "";
-                        data.slice(0, 30).forEach((p) => {
-                            html += `<tr>
-      <td>${p.pid}</td>
-      <td>${p.user}</td>
-      <td>${p.rss}</td>
-      <td>${p.vsz}</td>
-      <td>${p.state}</td>
-      <td>${p.command}</td>
-    </tr>`;
-                        });
-                        document.getElementById("proc").innerHTML = html;
-                    });
-            }
-
-            setInterval(update, 2000);
-            update();
+            // 自動更新
+            setInterval(updateSystem, 2000);
+            setInterval(loadDF, 5000);
         </script>
     </body>
 </html>

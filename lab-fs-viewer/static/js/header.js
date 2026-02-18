@@ -6,7 +6,9 @@ export function loadHeader() {
       loadSystemInfo();
     });
 }
-
+/* ==============================
+   システム情報読み込み
+============================== */
 function loadSystemInfo() {
   fetch("/api/system")
     .then((res) => res.json())

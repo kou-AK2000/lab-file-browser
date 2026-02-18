@@ -3,26 +3,6 @@ let currentPath = "/";
 let currentData = [];
 
 /* ==============================
-   システム情報読み込み
-============================== */
-function loadSystemInfo() {
-  fetch("/api/system")
-    .then((res) => res.json())
-    .then((data) => {
-      document.getElementById("systemInfo").innerHTML = `
-                <b>Hostname:</b> ${data.hostname} |
-                <b>Distribution:</b> ${data.distribution} |
-                <b>Kernel:</b> ${data.kernel} |
-                <b>Arch:</b> ${data.arch}
-            `;
-    })
-    .catch(() => {
-      document.getElementById("systemInfo").innerText =
-        "Failed to load system information";
-    });
-}
-
-/* ==============================
    サイズ変換
 ============================== */
 function convertSize(bytes) {
@@ -316,6 +296,5 @@ window.addEventListener("DOMContentLoaded", () => {
     load(currentPath);
   };
 
-  loadSystemInfo();
   load("/");
 });

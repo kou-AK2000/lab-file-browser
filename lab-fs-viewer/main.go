@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime"
 	"strconv"
@@ -43,6 +44,15 @@ type ProcessInfo struct {
 	VSZ     uint64 `json:"vsz"`
 	State   string `json:"state"`
 	Command string `json:"command"`
+}
+
+type DiskInfo struct {
+	Filesystem string  `json:"filesystem"`
+	Size       uint64  `json:"size"`
+	Used       uint64  `json:"used"`
+	Avail      uint64  `json:"avail"`
+	UsePercent float64 `json:"use_percent"`
+	MountedOn  string  `json:"mounted_on"`
 }
 
 /* =============================
@@ -284,6 +294,149 @@ func memoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /* =============================
+   Uptime(稼働時間)
+============================= */
+
+func uptimeHandler(w http.ResponseWriter, r *http.Request) {
+
+	data, err := os.ReadFile("/proc/uptime")
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	fields := strings.Fields(string(data))
+	if len(fields) < 1 {
+		http.Error(w, "invalid uptime", 500)
+		return
+	}
+
+	seconds, _ := strconv.ParseFloat(fields[0], 64)
+
+	json.NewEncoder(w).Encode(map[string]float64{
+		"uptime": seconds,
+	})
+}
+
+/* =============================
+   Disk使用率
+============================= */
+
+func diskHandler(w http.ResponseWriter, r *http.Request) {
+
+	var stat syscall.Statfs_t
+	err := syscall.Statfs("/", &stat)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	total := stat.Blocks * uint64(stat.Bsize)
+	free := stat.Bfree * uint64(stat.Bsize)
+	used := total - free
+
+	usage := float64(used) / float64(total) * 100
+
+	json.NewEncoder(w).Encode(map[string]float64{
+		"disk": usage,
+	})
+}
+
+func monitorHandler(w http.ResponseWriter, r *http.Request) {
+
+	cpu := cpuUsage()
+
+	// uptime
+	uptimeData, _ := os.ReadFile("/proc/uptime")
+	uptimeFields := strings.Fields(string(uptimeData))
+	uptimeSeconds, _ := strconv.ParseFloat(uptimeFields[0], 64)
+
+	// memory
+	memData, _ := os.ReadFile("/proc/meminfo")
+	lines := strings.Split(string(memData), "\n")
+
+	var memTotal, memAvail float64
+	for _, l := range lines {
+		if strings.HasPrefix(l, "MemTotal:") {
+			fmt.Sscanf(l, "MemTotal: %f kB", &memTotal)
+		}
+		if strings.HasPrefix(l, "MemAvailable:") {
+			fmt.Sscanf(l, "MemAvailable: %f kB", &memAvail)
+		}
+	}
+
+	memUsed := memTotal - memAvail
+
+	// disk
+	var stat syscall.Statfs_t
+	syscall.Statfs("/", &stat)
+	diskTotal := stat.Blocks * uint64(stat.Bsize)
+	diskFree := stat.Bfree * uint64(stat.Bsize)
+	diskUsed := diskTotal - diskFree
+
+	// process
+	entries, _ := os.ReadDir("/proc")
+	var processes []ProcessInfo
+
+	for _, e := range entries {
+		pid, err := strconv.Atoi(e.Name())
+		if err != nil {
+			continue
+		}
+
+		status, err := os.ReadFile("/proc/" + e.Name() + "/status")
+		if err != nil {
+			continue
+		}
+
+		var rss uint64
+		var uid int
+
+		lines := strings.Split(string(status), "\n")
+		for _, l := range lines {
+			if strings.HasPrefix(l, "VmRSS:") {
+				fmt.Sscanf(l, "VmRSS: %d kB", &rss)
+			}
+			if strings.HasPrefix(l, "Uid:") {
+				fmt.Sscanf(l, "Uid: %d", &uid)
+			}
+		}
+
+		username := "-"
+		if u, err := user.LookupId(strconv.Itoa(uid)); err == nil {
+			username = u.Username
+		}
+
+		cmd, _ := os.ReadFile("/proc/" + e.Name() + "/cmdline")
+
+		processes = append(processes, ProcessInfo{
+			PID:     pid,
+			User:    username,
+			RSS:     rss * 1024,
+			Command: strings.ReplaceAll(string(cmd), "\x00", " "),
+		})
+	}
+
+	response := map[string]interface{}{
+		"system": map[string]interface{}{
+			"cpu_usage":  cpu,
+			"uptime":     uptimeSeconds,
+			"mem_total":  memTotal * 1024,
+			"mem_used":   memUsed * 1024,
+			"mem_free":   memAvail * 1024,
+			"rss_total":  0,
+			"disk_total": diskTotal,
+			"disk_used":  diskUsed,
+			"load_avg":   []float64{0, 0, 0},
+			"cpu_cores":  []float64{},
+		},
+		"processes": processes,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+/* =============================
    プロセス一覧
 ============================= */
 
@@ -340,6 +493,41 @@ func processHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(list)
 }
 
+func dfHandler(w http.ResponseWriter, r *http.Request) {
+	cmd := exec.Command("df", "-h")
+	output, err := cmd.Output()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var data []map[string]string
+
+	for i, line := range lines {
+		if i == 0 || line == "" {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 6 {
+			continue
+		}
+
+		data = append(data, map[string]string{
+			"filesystem": fields[0],
+			"size":       fields[1],
+			"used":       fields[2],
+			"avail":      fields[3],
+			"usePercent": fields[4],
+			"mounted":    fields[5],
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
 /* =============================
    main
 ============================= */
@@ -354,8 +542,12 @@ func main() {
 	http.HandleFunc("/api/list", listHandler)
 	http.HandleFunc("/api/file", fileHandler)
 	http.HandleFunc("/api/system", systemHandler)
+	http.HandleFunc("/api/monitor", monitorHandler)
 	http.HandleFunc("/api/cpu", cpuHandler)
 	http.HandleFunc("/api/memory", memoryHandler)
+	http.HandleFunc("/api/uptime", uptimeHandler)
+	http.HandleFunc("/api/disk", diskHandler)
+	http.HandleFunc("/api/df", dfHandler)
 	http.HandleFunc("/api/process", processHandler)
 
 	// static 配信はこれだけでOK
