@@ -3,46 +3,91 @@
     <head>
         <meta charset="UTF-8" />
         <title>Simple Monitor</title>
+        <link rel="stylesheet" href="/css/style.css" />
     </head>
     <body>
         <h1>System Monitor</h1>
-
         <div id="header"></div>
 
-        <p>CPU: <span id="cpu">--</span>%</p>
-        <p>Memory: <span id="memory">--</span>%</p>
-        <p>Disk: <span id="disk">--</span>%</p>
-        <p>Uptime: <span id="uptime">--</span></p>
+        <div class="container">
+            <!-- ===== 左側 ===== -->
+            <div class="left-panel">
+                <!-- メトリクス -->
+                <div class="metrics">
+                    <div class="card">
+                        <h3>CPU</h3>
+                        <p><span id="cpu">--</span>%</p>
+                    </div>
 
-        <h2>Disk Usage</h2>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Filesystem</th>
-                    <th>Size</th>
-                    <th>Used</th>
-                    <th>Avail</th>
-                    <th>Use%</th>
-                    <th>Mounted on</th>
-                </tr>
-            </thead>
-            <tbody id="dfTable"></tbody>
-        </table>
+                    <div class="card">
+                        <h3>Memory</h3>
+                        <p><span id="memory">--</span>%</p>
+                    </div>
 
-        <!-- JS分離 -->
+                    <div class="card">
+                        <h3>Disk</h3>
+                        <p><span id="disk">--</span>%</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Uptime</h3>
+                        <p><span id="uptime">--</span></p>
+                    </div>
+                </div>
+
+                <!-- Disk Usage -->
+                <h2>Disk Usage</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Filesystem</th>
+                            <th>Size</th>
+                            <th>Used</th>
+                            <th>Avail</th>
+                            <th>Use%</th>
+                            <th>Mounted on</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dfTable"></tbody>
+                </table>
+            </div>
+
+            <!-- ===== 右側 ===== -->
+            <div class="right-panel">
+                <h2>Process List (Top 50)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PID</th>
+                            <th>User</th>
+                            <th>CPU</th>
+                            <th>MEM</th>
+                            <th>Command</th>
+                        </tr>
+                    </thead>
+                    <tbody id="processTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- JS -->
         <script type="module">
             import { loadHeader } from "/js/header.js";
-            import { updateSystem, loadDF } from "/js/monitor.js";
+            import {
+                updateSystem,
+                loadDF,
+                loadProcesses,
+            } from "/js/monitor.js";
 
             loadHeader();
 
-            // 初回実行
             updateSystem();
             loadDF();
+            loadProcesses();
 
-            // 自動更新
             setInterval(updateSystem, 2000);
             setInterval(loadDF, 5000);
+            setInterval(loadProcesses, 5000);
         </script>
     </body>
 </html>

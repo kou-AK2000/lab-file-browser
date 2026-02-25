@@ -160,3 +160,114 @@ pre {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+.monitor-layout {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.left-panel {
+    flex: 1;
+}
+
+.right-panel {
+    flex: 2;
+}
+
+.metrics {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    padding: 15px;
+    border: 1px solid #ccc;
+    color: black;
+    border-radius: 8px;
+    width: 120px;
+    text-align: center;
+    background: #f9f9f9;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table th,
+table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+.process-section {
+    margin-top: 40px;
+}
+
+.pagination {
+    margin-top: 10px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.pagination button {
+    padding: 5px 12px;
+    cursor: pointer;
+}
+
+/* 全体レイアウト */
+.container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* 左右50% */
+.left-panel {
+    flex: 1;
+}
+
+.right-panel {
+    flex: 1;
+}
+
+/* メトリクスを横並び */
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* カード風 */
+.card {
+    background: #f4f4f4;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+/* テーブル */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 6px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+th {
+    background: #eee;
+}
+
+.right-panel {
+    flex: 1;
+    max-height: 80vh;
+    overflow-y: auto;
+}

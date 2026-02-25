@@ -4,34 +4,27 @@
         <meta charset="utf-8" />
         <title>Lab File Browser</title>
         <link rel="stylesheet" href="/css/style.css" />
+        <script src="/js/chart.js"></script>
     </head>
 
     <body>
         <h2>Lab File Browser</h2>
-        <body>
-            <div id="header"></div>
 
-            <!-- 既存のコンテンツ -->
+        <div id="header"></div>
 
-            <script type="module">
-                import { loadHeader } from "/js/header.js";
-                loadHeader();
-            </script>
-
-            <script src="/js/filebrowser.js"></script>
-
-
-
-
+        <!-- ===== パス操作 ===== -->
         <div id="path"></div>
+
         <div id="pathNavigator" style="margin: 10px 0">
             <input type="text" id="pathInput" style="width: 300px" />
             <button id="goPathBtn">Go</button>
         </div>
+
         <button onclick="goUp()">⬆ Up</button>
 
         <br /><br />
 
+        <!-- ===== フィルター ===== -->
         <label>Size Unit:</label>
         <select id="unit">
             <option value="bit">bit</option>
@@ -69,6 +62,7 @@
 
         <br /><br />
 
+        <!-- ===== ファイル一覧 ===== -->
         <table>
             <thead>
                 <tr>
@@ -85,6 +79,10 @@
             <tbody id="list"></tbody>
         </table>
 
+        <!-- ===== CPU Graph ===== -->
+        <h2>CPU Graph</h2>
+        <canvas id="cpuChart"></canvas>
+
         <!-- ===== モーダル ===== -->
         <div id="fileModal" class="modal">
             <div class="modal-header">
@@ -93,12 +91,21 @@
             <pre id="fileContent"></pre>
         </div>
 
-        <!-- JS分離 -->
-        <script type="module">
-          import { loadHeader } from "/js/header.js";
-          loadHeader();
-        </script>
+        <!-- ===== JS ===== -->
 
+        <!-- filebrowser -->
         <script src="/js/filebrowser.js"></script>
+
+        <!-- monitor -->
+        <script type="module">
+            import { loadHeader } from "/js/header.js";
+            import { updateSystem, loadDF, initChart } from "/js/monitor.js";
+
+            loadHeader();
+            initChart();
+
+            updateSystem();
+            setInterval(updateSystem, 2000);
+        </script>
     </body>
 </html>

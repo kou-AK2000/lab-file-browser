@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>System Monitor Graph</title>
+        <script src="/js/chart.js"></script>
+    </head>
+    <body>
+        <div id="header"></div>
+
+        <h1>CPU Monitor</h1>
+
+        <canvas id="cpuChart" height="300"></canvas>
+
+        <script type="module">
+            import { loadHeader } from "/js/header.js";
+            import { updateSystem, initChart } from "/js/monitor.js";
+
+            loadHeader();
+            initChart();
+
+            updateSystem();
+            setInterval(updateSystem, 2000);
+        </script>
+    </body>
+</html>

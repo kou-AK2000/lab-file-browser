@@ -528,6 +528,50 @@ func dfHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
+type Process struct {
+	User    string `json:"user"`
+	Pid     string `json:"pid"`
+	Cpu     string `json:"cpu"`
+	Mem     string `json:"mem"`
+	Command string `json:"command"`
+}
+
+func processesHandler(w http.ResponseWriter, r *http.Request) {
+	cmd := exec.Command("ps", "aux", "--sort=-%cpu")
+	output, err := cmd.Output()
+	if err != nil {
+		http.Error(w, "ps failed", http.StatusInternalServerError)
+		return
+	}
+
+	lines := strings.Split(string(output), "\n")
+
+	var processes []Process
+
+	// 1行目はヘッダなのでスキップ
+	for i, line := range lines {
+		if i == 0 || strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) < 11 {
+			continue
+		}
+
+		processes = append(processes, Process{
+			User:    fields[0],
+			Pid:     fields[1],
+			Cpu:     fields[2],
+			Mem:     fields[3],
+			Command: strings.Join(fields[10:], " "),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(processes)
+}
+
 /* =============================
    main
 ============================= */
@@ -549,6 +593,7 @@ func main() {
 	http.HandleFunc("/api/disk", diskHandler)
 	http.HandleFunc("/api/df", dfHandler)
 	http.HandleFunc("/api/process", processHandler)
+	http.HandleFunc("/api/processes", processesHandler)
 
 	// static 配信はこれだけでOK
 	fs := http.FileServer(http.Dir("./static"))
