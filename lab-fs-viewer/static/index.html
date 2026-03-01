@@ -25,13 +25,6 @@
         <br /><br />
 
         <!-- ===== フィルター ===== -->
-        <label>Size Unit:</label>
-        <select id="unit">
-            <option value="bit">bit</option>
-            <option value="kb">KB</option>
-            <option value="mb">MB</option>
-            <option value="gb">GB</option>
-        </select>
 
         <label>Type:</label>
         <select id="typeFilter">
@@ -43,18 +36,6 @@
         <label>Search:</label>
         <input type="text" id="searchBox" placeholder="file name..." />
 
-        <label>Sort:</label>
-        <select id="sortBy">
-            <option value="name">Name</option>
-            <option value="size">Size</option>
-            <option value="date">Date</option>
-        </select>
-
-        <select id="sortOrder">
-            <option value="asc">Asc</option>
-            <option value="desc">Desc</option>
-        </select>
-
         <label style="margin-left: 10px">
             <input type="checkbox" id="showHiddenToggle" />
             Show hidden files
@@ -63,25 +44,30 @@
         <br /><br />
 
         <!-- ===== ファイル一覧 ===== -->
-        <table>
-            <thead>
-                <tr>
-                    <th>Mode</th>
-                    <th>Perm</th>
-                    <th>Links</th>
-                    <th>Owner</th>
-                    <th>Group</th>
-                    <th>Size</th>
-                    <th>Modified</th>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody id="list"></tbody>
-        </table>
+        <div class="file-list">
+            <div class="file-header">
+                <div class="col mode sortable" data-key="mode">Mode</div>
+                <div class="col perm sortable" data-key="perm">Perm</div>
+                <div class="col links sortable" data-key="nlink">Links</div>
+                <div class="col owner sortable" data-key="owner">Owner</div>
+                <div class="col group sortable" data-key="group">Group</div>
+                <div class="col size sortable" data-key="size">
+                    Size
+                    <select id="unit" class="size-unit-select">
+                        <option value="bit">bit</option>
+                        <option value="kb" selected>KB</option>
+                        <option value="mb">MB</option>
+                        <option value="gb">GB</option>
+                    </select>
+                </div>
+                <div class="col date sortable" data-key="mod_time">
+                    Modified
+                </div>
+                <div class="col name sortable" data-key="name">Name</div>
+            </div>
 
-        <!-- ===== CPU Graph ===== -->
-        <h2>CPU Graph</h2>
-        <canvas id="cpuChart"></canvas>
+            <div id="list"></div>
+        </div>
 
         <!-- ===== モーダル ===== -->
         <div id="fileModal" class="modal">

@@ -1,6 +1,8 @@
 let showHidden = false;
 let currentPath = "/";
 let currentData = [];
+let currentSortKey = "name";
+let currentSortOrder = "asc";
 
 /* ==============================
    サイズ変換
@@ -88,13 +90,11 @@ function closeModal() {
    描画
 ============================== */
 function render(data, path) {
-  const tbody = document.getElementById("list");
-  tbody.innerHTML = "";
+  const container = document.getElementById("list");
+  container.innerHTML = "";
 
   const filter = document.getElementById("typeFilter").value;
   const keyword = document.getElementById("searchBox").value.toLowerCase();
-  const sortBy = document.getElementById("sortBy").value;
-  const sortOrder = document.getElementById("sortOrder").value;
 
   let filtered = data.filter((item) => {
     if (filter === "dir" && !item.is_dir) return false;
@@ -104,109 +104,84 @@ function render(data, path) {
   });
 
   filtered.sort((a, b) => {
-    let valA, valB;
+    let valA = a[currentSortKey];
+    let valB = b[currentSortKey];
 
-    if (sortBy === "name") {
-      valA = a.name.toLowerCase();
-      valB = b.name.toLowerCase();
-    } else if (sortBy === "size") {
-      valA = a.size;
-      valB = b.size;
-    } else {
-      valA = new Date(a.mod_time);
-      valB = new Date(b.mod_time);
+    if (
+      currentSortKey === "name" ||
+      currentSortKey === "owner" ||
+      currentSortKey === "group" ||
+      currentSortKey === "mode" ||
+      currentSortKey === "perm"
+    ) {
+      valA = valA.toString().toLowerCase();
+      valB = valB.toString().toLowerCase();
     }
 
-    if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-    if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+    if (currentSortKey === "mod_time") {
+      valA = new Date(valA);
+      valB = new Date(valB);
+    }
+
+    if (valA < valB) return currentSortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return currentSortOrder === "asc" ? 1 : -1;
     return 0;
   });
 
-  // 🔹 空ディレクトリ処理（ここに置く）
   if (filtered.length === 0) {
-    const row = document.createElement("tr");
-    const cell = document.createElement("td");
-    cell.colSpan = 8;
-    cell.style.textAlign = "center";
-    cell.style.opacity = "0.6";
-    cell.textContent = "This directory is empty";
-    row.appendChild(cell);
-    tbody.appendChild(row);
-    return; // ← 重要
+    const empty = document.createElement("div");
+    empty.style.opacity = "0.6";
+    empty.style.padding = "12px";
+    empty.textContent = "This directory is empty";
+    container.appendChild(empty);
+    return;
   }
 
   filtered.forEach((item) => {
-    const row = document.createElement("tr");
+    const row = document.createElement("div");
+    row.classList.add("file-row");
 
-    // Mode
-    const modeCell = document.createElement("td");
-    modeCell.textContent = item.mode;
-    row.appendChild(modeCell);
+    if (item.is_dir) row.classList.add("dir");
+    if (item.perm && item.perm.includes("x")) row.classList.add("exec");
+    if (item.name.startsWith(".")) row.classList.add("hidden");
+    if (item.owner === "root") row.classList.add("root-owner");
 
-    // Perm
-    const permCell = document.createElement("td");
-    const permSpan = document.createElement("span");
-    permSpan.textContent = item.perm;
-    permSpan.style.color = getPermColor(item);
-    permSpan.style.fontWeight = "bold";
-    permSpan.style.cursor = "pointer";
+    const columns = [
+      { class: "mode", value: item.mode },
+      { class: "perm", value: item.perm },
+      { class: "links", value: item.nlink },
+      { class: "owner", value: item.owner },
+      { class: "group", value: item.group },
+      { class: "size", value: convertSize(item.size) },
+      { class: "date", value: item.mod_time },
+    ];
 
-    permSpan.onclick = () => {
-      document.getElementById("fileContent").textContent = explainPerm(
-        item.perm,
-      );
-      document.getElementById("fileModal").style.display = "block";
-    };
+    columns.forEach((colData) => {
+      const col = document.createElement("div");
+      col.classList.add("col", colData.class);
+      col.textContent = colData.value;
+      row.appendChild(col);
+    });
 
-    permCell.appendChild(permSpan);
-    row.appendChild(permCell);
+    // Name column
+    const nameCol = document.createElement("div");
+    nameCol.classList.add("col", "name");
 
-    // Links
-    const linkCell = document.createElement("td");
-    linkCell.textContent = item.nlink;
-    row.appendChild(linkCell);
-
-    // Owner
-    const ownerCell = document.createElement("td");
-    ownerCell.textContent = item.owner;
-    row.appendChild(ownerCell);
-
-    // Group
-    const groupCell = document.createElement("td");
-    groupCell.textContent = item.group;
-    row.appendChild(groupCell);
-
-    // Size
-    const sizeCell = document.createElement("td");
-    sizeCell.textContent = convertSize(item.size);
-    row.appendChild(sizeCell);
-
-    // Modified
-    const modCell = document.createElement("td");
-    modCell.textContent = item.mod_time;
-    row.appendChild(modCell);
-
-    // Name
-    const nameCell = document.createElement("td");
     const span = document.createElement("span");
-    span.classList.add("name-cell");
     span.textContent = item.name;
 
     if (!item.readable) {
       span.style.opacity = "0.4";
-      span.style.cursor = "default";
     } else {
       span.style.cursor = "pointer";
 
       if (item.is_dir) {
-        span.classList.add("dir-icon");
         span.onclick = () => {
           const newPath =
             path === "/" ? "/" + item.name : path + "/" + item.name;
           load(newPath);
         };
       } else {
-        span.classList.add("file-icon");
         span.onclick = () => {
           const filePath =
             path === "/" ? "/" + item.name : path + "/" + item.name;
@@ -215,9 +190,10 @@ function render(data, path) {
       }
     }
 
-    nameCell.appendChild(span);
-    row.appendChild(nameCell);
-    tbody.appendChild(row);
+    nameCol.appendChild(span);
+    row.appendChild(nameCol);
+
+    container.appendChild(row);
   });
 }
 
@@ -265,8 +241,6 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("unit").onchange = reload;
   document.getElementById("typeFilter").onchange = reload;
   document.getElementById("searchBox").oninput = reload;
-  document.getElementById("sortBy").onchange = reload;
-  document.getElementById("sortOrder").onchange = reload;
 
   document.getElementById("closeModal").onclick = closeModal;
 
@@ -289,6 +263,27 @@ window.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") {
       document.getElementById("goPathBtn").click();
     }
+  });
+
+  document.querySelectorAll(".sortable").forEach((header) => {
+    header.addEventListener("click", () => {
+      const key = header.dataset.key;
+
+      if (currentSortKey === key) {
+        currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+      } else {
+        currentSortKey = key;
+        currentSortOrder = "asc";
+      }
+
+      document.querySelectorAll(".sortable").forEach((h) => {
+        h.classList.remove("asc", "desc");
+      });
+
+      header.classList.add(currentSortOrder);
+
+      reload();
+    });
   });
 
   document.getElementById("showHiddenToggle").onchange = (e) => {

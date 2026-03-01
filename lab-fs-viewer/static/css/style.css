@@ -1,141 +1,260 @@
+/* =========================================================
+   Linux Lab Mode
+   Dark + Subtle Neon + Minimal Motion
+========================================================= */
+
 /* ===============================
-   全体
+   1. Global
 ================================ */
+
 body {
-    font-family: monospace;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
+    font-family: "JetBrains Mono", monospace;
+    background: #0f1117;
+    color: #c9d1d9;
     margin: 20px;
 }
 
 h2 {
-    margin-bottom: 15px;
-    color: #ffffff;
+    margin-bottom: 20px;
+    color: #7dd3fc;
+    text-shadow: 0 0 6px rgba(125, 211, 252, 0.35);
+    letter-spacing: 1px;
 }
 
 /* ===============================
-   OS情報パネル
+   2. System / Path Area
 ================================ */
+
 #systemInfo {
-    background: #2b2b2b;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
-    font-size: 14px;
+    background: #161b22;
+    border: 1px solid #1f2937;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.05);
 }
 
-/* ===============================
-   パス表示
-================================ */
 #path {
     font-weight: bold;
-    margin-bottom: 10px;
+    color: #22d3ee;
+    margin-bottom: 12px;
 }
 
 /* ===============================
-   ボタン
+   3. Controls (Button / Input)
 ================================ */
+
 button {
-    padding: 6px 10px;
-    border: none;
+    padding: 6px 12px;
+    border: 1px solid #1f2937;
     border-radius: 6px;
-    background: #3a3a3a;
-    color: white;
+    background: #1a1f27;
+    color: #c9d1d9;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: 0.15s ease;
 }
 
 button:hover {
-    background: #505050;
+    background: #22d3ee;
+    color: #0f1117;
 }
 
-/* ===============================
-   入力UI
-================================ */
 select,
 input {
-    background: #2b2b2b;
-    color: white;
-    border: 1px solid #444;
+    background: #161b22;
+    color: #c9d1d9;
+    border: 1px solid #1f2937;
     border-radius: 6px;
     padding: 4px 6px;
     margin-right: 8px;
 }
 
-/* ===============================
-   テーブル
-================================ */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    background: #2b2b2b;
-    color: #e0e0e0; /* ← 明示的に通常色固定 */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+select:focus,
+input:focus {
+    outline: none;
+    border-color: #22d3ee;
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.4);
 }
 
-th {
-    background: #3a3a3a;
-    padding: 6px 8px;
-    text-align: left;
-    border-bottom: 1px solid #444;
-    border-right: 1px solid #444;
-    color: #e0e0e0; /* ← 念のため固定 */
-}
+/* =========================================================
+   4. File List (Flex-based ls -l layout)
+========================================================= */
 
-td {
-    padding: 6px 8px;
-    border-bottom: 1px solid #444;
-    border-right: 1px solid #444;
-    color: #e0e0e0; /* ← ここ重要（黄色化防止） */
-}
-
-th:last-child,
-td:last-child {
-    border-right: none;
-}
-
-tr:nth-child(even) {
-    background-color: #262626;
-}
-
-tr:hover {
-    background-color: #333333;
+.file-list {
+    margin-top: 20px;
+    font-size: 14px;
 }
 
 /* ===============================
-   ファイル名スタイル
+   Header row
 ================================ */
-.name-cell {
-    color: #8ab4f8;
-    text-decoration: underline;
+
+.file-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #1f2937;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: rgba(125, 211, 252, 0.03);
 }
 
-.name-cell:hover {
-    text-decoration: none;
+.file-header .size {
+    display: flex;
+    align-items: center;
+}
+
+.size-unit-select {
+    margin-left: 6px;
+    font-size: 11px;
+    background: #111827;
+    color: #7dd3fc;
+    border: 1px solid #1f2937;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+/* sortable header */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+/* ソート矢印 */
+.sortable::after {
+    content: "";
+    margin-left: 6px;
+    font-size: 10px;
+}
+
+/* 昇順 */
+.sortable.asc::after {
+    content: "▲";
+    color: #22d3ee;
+}
+
+/* 降順 */
+.sortable.desc::after {
+    content: "▼";
+    color: #22d3ee;
+}
+
+/* ヘッダーは常に水色 */
+.file-header .col {
+    color: #7dd3fc;
 }
 
 /* ===============================
-   アイコン
+   File row
 ================================ */
-.dir-icon::before {
-    content: "📁 ";
+
+.file-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #1b1f27;
+    transition: 0.15s ease;
 }
 
-.file-icon::before {
-    content: "📄 ";
+.file-row:hover {
+    background: rgba(34, 211, 238, 0.05);
+    transform: translateX(3px);
 }
 
 /* ===============================
-   モーダル
+   Column base
 ================================ */
+
+.col {
+    flex-shrink: 0;
+    padding-right: 12px;
+    margin-right: 12px;
+}
+
+/* 列区切り線 */
+.file-row .col:not(:last-child),
+.file-header .col:not(:last-child) {
+    border-right: 1px solid #1f2937;
+}
+
+/* ===============================
+   Column widths (ls alignment)
+================================ */
+
+/* 共通幅指定（ヘッダー＋データ共通） */
+.col.mode {
+    width: 110px;
+}
+.col.perm {
+    width: 60px;
+}
+.col.links {
+    width: 50px;
+}
+.col.owner {
+    width: 110px;
+}
+.col.group {
+    width: 110px;
+}
+.col.size {
+    width: 100px;
+    text-align: right;
+}
+.col.date {
+    width: 170px;
+}
+.col.name {
+    flex-grow: 1;
+    padding-left: 12px;
+}
+
+/* データ行だけ色変更 */
+.file-row .size {
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.file-row .date {
+    color: #94a3b8;
+}
+
+/* =========================================================
+   5. Semantic Highlighting
+========================================================= */
+
+/* Directory */
+.file-row.dir .name {
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+/* Executable */
+.file-row.exec .name {
+    color: #4ade80;
+}
+
+/* Hidden file */
+.file-row.hidden {
+    opacity: 0.6;
+}
+
+/* Root-owned file (optional class) */
+.file-row.root-owner {
+    background: linear-gradient(90deg, rgba(255, 0, 0, 0.08), transparent);
+}
+
+/* =========================================================
+   6. Modal (File Viewer)
+========================================================= */
+
 .modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    color: #eee;
+    background: rgba(10, 15, 20, 0.98);
+    color: #e5e7eb;
     padding: 20px;
     overflow: auto;
     z-index: 9999;
@@ -150,7 +269,7 @@ tr:hover {
 #closeModal {
     background: none;
     border: none;
-    color: white;
+    color: #7dd3fc;
     font-size: 28px;
     cursor: pointer;
 }
@@ -161,6 +280,10 @@ pre {
     word-wrap: break-word;
 }
 
+/* =========================================================
+   7. Monitor Layout (if used on other pages)
+========================================================= */
+
 .monitor-layout {
     display: flex;
     gap: 40px;
@@ -170,104 +293,23 @@ pre {
 .left-panel {
     flex: 1;
 }
-
-.right-panel {
-    flex: 2;
-}
-
-.metrics {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.card {
-    padding: 15px;
-    border: 1px solid #ccc;
-    color: black;
-    border-radius: 8px;
-    width: 120px;
-    text-align: center;
-    background: #f9f9f9;
-}
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-table th,
-table td {
-    border: 1px solid #ccc;
-    padding: 6px;
-}
-
-.process-section {
-    margin-top: 40px;
-}
-
-.pagination {
-    margin-top: 10px;
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
-.pagination button {
-    padding: 5px 12px;
-    cursor: pointer;
-}
-
-/* 全体レイアウト */
-.container {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-/* 左右50% */
-.left-panel {
-    flex: 1;
-}
-
-.right-panel {
-    flex: 1;
-}
-
-/* メトリクスを横並び */
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-/* カード風 */
-.card {
-    background: #f4f4f4;
-    padding: 15px;
-    border-radius: 8px;
-}
-
-/* テーブル */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th,
-td {
-    padding: 6px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-}
-
-th {
-    background: #eee;
-}
-
 .right-panel {
     flex: 1;
     max-height: 80vh;
     overflow-y: auto;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* Dark themed card */
+.card {
+    background: #161b22;
+    border: 1px solid #1f2937;
+    padding: 14px;
+    border-radius: 10px;
 }
